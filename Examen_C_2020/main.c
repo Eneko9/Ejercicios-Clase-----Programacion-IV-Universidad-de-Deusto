@@ -28,8 +28,9 @@ int main(void)
 	Carrito carrito;
 	imprimirProducto(*comprados[1]);
 	int cants[5] = {1,3,5,7,9};
+	fflush(stdout);
 	//funcion crear ticket no funciona.
-	//crearCarrito(&carrito, comprados,cants, 5);
+	crearCarrito(&carrito, comprados,cants, 5);
 	imprimirProducto(carrito.compras[0].p);
 	imprimirTicket(&carrito);
 

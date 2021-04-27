@@ -17,9 +17,10 @@ void imprimirCompra(Compra c) {
 			c.unidades);
 }
 void crearCarrito(Carrito *c, Producto *prods[], int *cants, int tamanyo) {
+	c->compras = malloc(sizeof(Compra)* tamanyo);
+	c->numCompras = tamanyo;
 	for (int i = 0; i < tamanyo; ++i) {
 		c->compras->p = *(prods[i]);
-		printf("HOLA");
 		c->compras->unidades = cants[i];
 	}
 }
