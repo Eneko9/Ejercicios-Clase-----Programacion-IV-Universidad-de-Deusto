@@ -39,7 +39,7 @@ namespace containers
 		int capacidadAnterior = this->capacity;
 
 		this->capacity = capacity;
-		this->array = new ArrayInt[this->capacity];
+		//this->array = new ArrayInt[this->capacity];
 
 		unsigned int contador;
 		while(contador< capacidadAnterior && contador< this->capacity){
