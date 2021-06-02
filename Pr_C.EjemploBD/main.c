@@ -1,11 +1,16 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "sqlite3.h"
 #include <string.h>
+#include "estructuras.h"
 
-int showAllCountries(sqlite3 *db) {
+#define CREATE_TABLE_PRODUCTO "CREATE TABLE IF NOT EXISTS producto (cod_prod INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, nombre TEXT NOT NULL, stock INTEGER NOT NULL, precio FLOAT NOT NULL, nombre_sec TEXT NOT NULL)"
+
+
+int visualizarProductosBD(sqlite3 *db) {
 	sqlite3_stmt *stmt;
 
-	char sql[] = "select id, name from country";
+	char sql[] = "SELECT * FROM producto";
 
 	int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) ;
 	if (result != SQLITE_OK) {
@@ -18,16 +23,20 @@ int showAllCountries(sqlite3 *db) {
 
 	int id;
 	char name[100];
+	int stock;
+	float precio;
 
 	printf("\n");
 	printf("\n");
-	printf("Showing countries:\n");
+	printf("Showing products:\n");
 	do {
 		result = sqlite3_step(stmt) ;
 		if (result == SQLITE_ROW) {
 			id = sqlite3_column_int(stmt, 0);
 			strcpy(name, (char *) sqlite3_column_text(stmt, 1));
-			printf("ID: %d Name: %s\n", id, name);
+			stock = sqlite3_column_int(stmt, 2);
+			precio = sqlite3_column_double(stmt, 3);
+			printf("ID: %d Name: %s Stock: %i Price: %f\n", id, name, stock, precio);
 		}
 	} while (result == SQLITE_ROW);
 
@@ -46,14 +55,21 @@ int showAllCountries(sqlite3 *db) {
 	return SQLITE_OK;
 }
 
-int deleteAllCountry(sqlite3 *db) {
+int eliminarProducto(sqlite3 *db, char* nomProd) {
 	sqlite3_stmt *stmt;
 
-	char sql[] = "delete from country";
+	char sql[] = "DELETE FROM producto WHERE nombre= ? ";
 
 	int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) ;
 	if (result != SQLITE_OK) {
 		printf("Error preparing statement (DELETE)\n");
+		printf("%s\n", sqlite3_errmsg(db));
+		return result;
+	}
+
+	result = sqlite3_bind_text(stmt, 1, nomProd, strlen(nomProd), SQLITE_STATIC);
+	if (result != SQLITE_OK) {
+		printf("Error binding parameter 1\n");
 		printf("%s\n", sqlite3_errmsg(db));
 		return result;
 	}
@@ -79,10 +95,11 @@ int deleteAllCountry(sqlite3 *db) {
 	return SQLITE_OK;
 }
 
-int insertNewCountry(sqlite3 *db, char name[]) {
+
+int insertarProductoNuevo(sqlite3 *db, char* nombre, int stock, float precio, char* nom_seccion) {
 	sqlite3_stmt *stmt;
 
-	char sql[] = "insert into country (id, name) values (NULL, ?)";
+	char sql[] = "insert into producto values (NULL, ?, ?, ?, ?)";
 	int result = sqlite3_prepare_v2(db, sql, strlen(sql) + 1, &stmt, NULL) ;
 	if (result != SQLITE_OK) {
 		printf("Error preparing statement (INSERT)\n");
@@ -92,9 +109,27 @@ int insertNewCountry(sqlite3 *db, char name[]) {
 
 	printf("SQL query prepared (INSERT)\n");
 
-	result = sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
+	result = sqlite3_bind_text(stmt, 1, nombre, strlen(nombre), SQLITE_STATIC);
 	if (result != SQLITE_OK) {
-		printf("Error binding parameters\n");
+		printf("Error binding parameter 1\n");
+		printf("%s\n", sqlite3_errmsg(db));
+		return result;
+	}
+	result = sqlite3_bind_int(stmt, 2, stock);
+	if (result != SQLITE_OK) {
+		printf("Error binding parameter 2\n");
+		printf("%s\n", sqlite3_errmsg(db));
+		return result;
+	}
+	result = sqlite3_bind_double(stmt, 3, precio);
+	if (result != SQLITE_OK) {
+		printf("Error binding parameter 3\n");
+		printf("%s\n", sqlite3_errmsg(db));
+		return result;
+	}
+	result = sqlite3_bind_text(stmt, 4, nom_seccion, strlen(nom_seccion), SQLITE_STATIC);
+	if (result != SQLITE_OK) {
+		printf("Error binding parameter 4\n");
 		printf("%s\n", sqlite3_errmsg(db));
 		return result;
 	}
@@ -120,31 +155,43 @@ int insertNewCountry(sqlite3 *db, char name[]) {
 int main() {
 	sqlite3 *db;
 
-	int result = sqlite3_open("test.sqlite", &db);
+
+	const char * filename = "SBenenjo.db";
+	int result = sqlite3_open(filename, &db);
 	if (result != SQLITE_OK) {
 		printf("Error opening database\n");
 		return result;
 	}
-
 	printf("Database opened\n") ;
 
-	result = deleteAllCountry(db);
-	if (result != SQLITE_OK) {
-		printf("Error deleting all countries\n");
-		printf("%s\n", sqlite3_errmsg(db));
-		return result;
+	if(sqlite3_exec(db, CREATE_TABLE_PRODUCTO, NULL, NULL, NULL) != SQLITE_OK){
+		printf("Error al crear tabla\n");
 	}
 
-	result = insertNewCountry(db, "France");
+//	if(sqlite3_exec(db, CREATE_TABLE_SECCION, NULL, NULL, NULL) != SQLITE_OK){
+//		printf("Error al crear tabla\n");
+//	}
+
+	printf("Table created\n");
+
+	result = insertarProductoNuevo(db, "rape", 390, 9.45, "pescados");
 	if (result != SQLITE_OK) {
 		printf("Error inserting new data\n");
 		printf("%s\n", sqlite3_errmsg(db));
 		return result;
 	}
+	printf("Producto insertado\n");
 
-	result = showAllCountries(db);
+	result = visualizarProductosBD(db);
 	if (result != SQLITE_OK) {
-		printf("Error getting all countries\n");
+		printf("Error getting all products\n");
+		printf("%s\n", sqlite3_errmsg(db));
+		return result;
+	}
+
+	result = eliminarProducto(db, "salmon");
+	if (result != SQLITE_OK) {
+		printf("Error deleting data\n");
 		printf("%s\n", sqlite3_errmsg(db));
 		return result;
 	}

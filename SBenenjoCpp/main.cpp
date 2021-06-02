@@ -5,4 +5,7 @@
  *      Author: eneko
  */
 
+int main(int argc, char **argv) {
+
+}
 
